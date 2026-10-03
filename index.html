@@ -12,7 +12,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M4 32 18 18 32 32 18 46Z M32 32 46 18 60 32 46 46Z' fill='%236F8AA8'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Mrs+Saint+Delafield&family=Long+Cang&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#EDF0F3; --paper:#FFFFFF; --ink:#1F2A3B; --muted:#5F6B7C; --faint:#8A95A4; --line:#D6DCE3;
@@ -171,18 +171,20 @@ p{margin:0 0 1em}
 .mate b{font-family:var(--display);font-weight:600;font-size:1.04rem;line-height:1.2;margin:2px 0 6px}
 .mate span{font-size:.84rem;color:var(--muted);line-height:1.4}
 .mood{margin-top:30px;padding:16px 18px;border-radius:18px;background:var(--paper);font-size:.95rem}
-.share{margin-top:12px;border-radius:26px;background:var(--paper);padding:18px;box-shadow:0 20px 40px -30px rgba(31,42,59,.5)}
-.share-img{position:relative;border-radius:18px;overflow:hidden;background:#EFEBE2}
-.share-img img{width:100%;aspect-ratio:1;object-fit:cover}
-.share-img .tagc{position:absolute;left:12px;top:12px;font-size:.72rem;font-weight:700;padding:5px 10px;border-radius:999px;background:var(--ink);color:#fff;letter-spacing:.02em}
-.share-row{display:flex;gap:14px;align-items:center;margin-top:16px}
-.share-row .who{flex:1;min-width:0}
-.share-row .who small{display:block;font-size:.76rem;color:var(--faint)}
-.share-row .who b{display:block;font-family:var(--display);font-weight:600;font-size:1.25rem;line-height:1.15}
-.share-row .who span{display:block;font-size:.85rem;color:var(--muted);margin-top:4px}
-.qr{flex:0 0 auto;width:86px;text-align:center}
-.qr svg{width:86px;height:86px;display:block}
-.qr small{font-size:.66rem;color:var(--faint);display:block;margin-top:3px}
+.pcard{max-width:380px;margin:8px auto 0;perspective:1600px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.pcard-in{position:relative;aspect-ratio:3/4;transition:transform .75s cubic-bezier(.3,.7,.2,1);transform-style:preserve-3d}
+.pcard.flipped .pcard-in{transform:rotateY(180deg)}
+.pface{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:18px;overflow:hidden;box-shadow:0 24px 40px -26px rgba(31,42,59,.55)}
+.pface canvas{width:100%;height:100%;display:block}
+.pface.figure{transform:rotateY(180deg)}
+.fliphint{display:flex;align-items:center;justify-content:center;gap:6px;font-size:.82rem;color:var(--faint);margin:12px 0 0}
+.fliphint svg{width:15px;height:15px}
+.namefield{max-width:380px;margin:22px auto 0}
+.namefield label{display:block;font-size:.9rem;font-weight:500;margin-bottom:6px}
+.namefield label span{font-weight:400;color:var(--faint)}
+.namefield input{width:100%;height:50px;border-radius:14px;border:1.5px solid var(--line);background:var(--paper);padding:0 16px;font:inherit;color:var(--ink)}
+.namefield input:focus{outline:none;border-color:var(--accent)}
+.namefield small{display:block;margin-top:6px;font-size:.78rem;color:var(--faint)}
 .actions{display:grid;gap:10px;margin-top:22px}
 .actions .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .toast{min-height:1.4em;text-align:center;font-size:.9rem;color:var(--aink);margin-top:8px}
@@ -454,11 +456,20 @@ function renderResult(rec, mine){
   if(mine && rec.mood) h += `<div class="mood">${esc(D.MOODS[rec.mood])}</div>`;
 
   if(mine){
-    h += `<h3 class="sec">Share your result<small>Screenshot this card and send it to the group chat</small></h3>
-      <div class="share" id="shareCard">
-        <div class="share-img"><img id="shareImg" src="${img(imgKey,"illustration")}" alt=""><span class="tagc">${isSq ? "HIDDEN TYPE" : code}</span></div>
-        <div class="share-row"><div class="who"><small>My SDTI type</small><b>${esc(T.n)}</b><span>“${esc(T.cap)}”</span></div><div class="qr"><div id="qrBox"></div><small>Find your type</small></div></div>
+    h += `<h3 class="sec">Your collectible card<small>Tap the card to flip it. Add a name if you like, then save.</small></h3>
+      <div class="pcard" id="pcard" role="button" tabindex="0" aria-label="Collectible card. Tap to flip.">
+        <div class="pcard-in">
+          <div class="pface slogan"><canvas id="cvBack" width="960" height="1280"></canvas></div>
+          <div class="pface figure"><canvas id="cvFront" width="960" height="1280"></canvas></div>
+        </div>
       </div>
+      <p class="fliphint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.2L3 16M3 21v-5h5"/></svg>Tap to flip</p>
+      <div class="namefield"><label for="sigName">Name your designer <span>(optional)</span></label>
+        <input id="sigName" maxlength="24" autocomplete="off" placeholder="e.g. Captain Wireframe">
+        <small>It appears as a signature on the figure side.</small></div>
+      <div class="actions" style="max-width:380px;margin-left:auto;margin-right:auto"><button class="btn block" id="saveBtn">Save card</button></div>
+`;
+    h += `
       <div class="actions"><button class="btn block" id="copyBtn">Copy link to the test</button>
       <div class="row"><button class="btn ghost" id="galBtn">All types</button><button class="btn ghost" id="retakeBtn">Retake</button></div></div>
       <div class="toast" id="toast" role="status"></div>
@@ -481,8 +492,8 @@ function renderResult(rec, mine){
   }));
   if(mine){
     const fb = $("#flipBtn");
-    fb.addEventListener("click", ()=>{ $("#flip").classList.add("open"); fb.setAttribute("tabindex","-1"); setTimeout(()=>{ $("#cap").textContent = "“"+T.cap+"”"; const si = $("#shareImg"); if(si) si.src = img(imgKey,"felt"); }, 450); });
-    drawQR();
+    fb.addEventListener("click", ()=>{ $("#flip").classList.add("open"); fb.setAttribute("tabindex","-1"); setTimeout(()=>{ $("#cap").textContent = "“"+T.cap+"”"; }, 450); });
+    setupCard({ T, code, isSq, imgKey, G });
     $("#retakeBtn").addEventListener("click", ()=>{ buildQuiz(); show("quiz"); renderQ(); setAccent("PD"); });
     $("#galBtn").addEventListener("click", ()=>openGallery("mine"));
     $("#copyBtn").addEventListener("click", copyLink);
@@ -490,13 +501,136 @@ function renderResult(rec, mine){
 }
 
 function pageURL(){ return location.href.split("#")[0].split("?")[0]; }
-function drawQR(){
-  const box = $("#qrBox"); if(!box || typeof qrcode !== "function") return;
-  try{
-    const q = qrcode(0, "M"); q.addData(pageURL()); q.make();
-    box.innerHTML = q.createSvgTag({ cellSize: 3, margin: 0, scalable: true });
-    const svg = box.querySelector("svg"); if(svg){ svg.querySelectorAll("path").forEach(p=>p.setAttribute("fill","#1F2A3B")); }
-  }catch(e){ box.innerHTML = ""; }
+/* ---------- collectible card ---------- */
+const CW = 960, CH = 1280, SIG = '"Mrs Saint Delafield","Long Cang",cursive';
+let cardState = null;
+function rr(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function wrap(ctx,text,maxW){ const words = text.split(" "), lines = []; let line = "";
+  words.forEach(w=>{ const t = line ? line+" "+w : w; if(ctx.measureText(t).width > maxW && line){ lines.push(line); line = w; } else line = t; });
+  if(line) lines.push(line); return lines; }
+function fitFont(ctx, text, maxW, size, tpl){ do { ctx.font = tpl(size); size -= 2; } while(ctx.measureText(text).width > maxW && size > 18); }
+
+function drawBack(ctx, st){
+  const { T, code, isSq, G } = st;
+  ctx.clearRect(0,0,CW,CH);
+  ctx.save(); rr(ctx,0,0,CW,CH,44); ctx.clip();
+  ctx.fillStyle = G.color; ctx.fillRect(0,0,CW,CH);
+  // double-diamond pattern
+  ctx.strokeStyle = "rgba(255,255,255,.08)"; ctx.lineWidth = 2;
+  for(let y=-60; y<CH+120; y+=120) for(let x=-60+((y/120)%2?60:0); x<CW+120; x+=240){
+    ctx.beginPath(); ctx.moveTo(x-50,y); ctx.lineTo(x,y-34); ctx.lineTo(x+50,y); ctx.lineTo(x,y+34); ctx.closePath();
+    ctx.moveTo(x+50,y); ctx.lineTo(x+100,y-34); ctx.lineTo(x+150,y); ctx.lineTo(x+100,y+34); ctx.closePath(); ctx.stroke(); }
+  ctx.restore();
+  ctx.strokeStyle = "rgba(255,255,255,.4)"; ctx.lineWidth = 2; rr(ctx,30,30,CW-60,CH-60,28); ctx.stroke();
+  ctx.fillStyle = "#fff"; ctx.textBaseline = "alphabetic";
+  ctx.font = '700 32px "DM Sans",system-ui,sans-serif'; ctx.textAlign = "left"; ctx.fillText("SDTI", 76, 112);
+  ctx.textAlign = "right"; ctx.fillText(isSq ? "HIDDEN TYPE" : code, CW-76, 112);
+  // type name + slogan
+  ctx.textAlign = "center";
+  ctx.fillStyle = "rgba(255,255,255,.82)";
+  fitFont(ctx, T.n, CW-200, 46, s=>`600 ${s}px "Fraunces",Georgia,serif`);
+  ctx.font = ctx.font; 
+  ctx.fillStyle = "#fff";
+  ctx.font = 'italic 400 82px "Fraunces",Georgia,serif';
+  let lines = wrap(ctx, T.t, CW-180), lh = 96;
+  if(lines.length > 4){ ctx.font = 'italic 400 66px "Fraunces",Georgia,serif'; lines = wrap(ctx, T.t, CW-180); lh = 78; }
+  const blockH = lines.length*lh, top = CH*0.47 - blockH/2;
+  ctx.fillStyle = "rgba(255,255,255,.82)"; fitFont(ctx, T.n.toUpperCase(), CW-200, 34, s=>`700 ${s}px "DM Sans",system-ui,sans-serif`);
+  ctx.fillText(T.n.toUpperCase(), CW/2, top - 40);
+  ctx.fillStyle = "#fff"; ctx.font = lh===96 ? 'italic 400 82px "Fraunces",Georgia,serif' : 'italic 400 66px "Fraunces",Georgia,serif';
+  lines.forEach((l,i)=>ctx.fillText(l, CW/2, top + lh*(i+0.8)));
+  // QR + caption
+  const qs = 210, qx = CW-76-qs, qy = CH-76-qs;
+  ctx.fillStyle = "#fff"; rr(ctx,qx,qy,qs,qs,22); ctx.fill();
+  try{ const q = qrcode(0,"M"); q.addData(pageURL()); q.make(); const n = q.getModuleCount(), pad = 18, cell = (qs-pad*2)/n;
+    ctx.fillStyle = "#1F2A3B"; for(let r=0;r<n;r++) for(let c=0;c<n;c++) if(q.isDark(r,c)) ctx.fillRect(qx+pad+c*cell, qy+pad+r*cell, Math.ceil(cell), Math.ceil(cell)); }catch(e){}
+  ctx.textAlign = "left"; ctx.fillStyle = "#fff"; ctx.font = '400 40px "Fraunces",Georgia,serif';
+  ctx.fillText("Scan to find", 76, CH-178); ctx.fillText("your own type.", 76, CH-128);
+  ctx.fillStyle = "rgba(255,255,255,.7)"; ctx.font = '400 24px "DM Sans",system-ui,sans-serif';
+  ctx.fillText("Sketchy Designer Type Indicator", 76, CH-80);
+}
+function drawFront(ctx, st){
+  const { T, code, isSq, G, photo, name } = st;
+  ctx.clearRect(0,0,CW,CH);
+  ctx.save(); rr(ctx,0,0,CW,CH,44); ctx.clip();
+  ctx.fillStyle = "#fff"; ctx.fillRect(0,0,CW,CH);
+  ctx.fillStyle = "#EFEBE2"; ctx.fillRect(0,0,CW,CW);
+  if(photo) ctx.drawImage(photo, 0, 0, CW, CW);
+  ctx.restore();
+  // bottom band
+  const chip = isSq ? "HIDDEN TYPE" : code;
+  ctx.font = '700 26px "DM Sans",system-ui,sans-serif'; const cw = ctx.measureText(chip).width + 36;
+  ctx.fillStyle = G.pale; rr(ctx,70,CW+44,cw,48,24); ctx.fill();
+  ctx.fillStyle = G.ink; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(chip, 88, CW+69);
+  ctx.textBaseline = "alphabetic"; ctx.fillStyle = "#1F2A3B";
+  fitFont(ctx, T.n, CW-140, 58, s=>`600 ${s}px "Fraunces",Georgia,serif`); ctx.fillText(T.n, 70, CW+170);
+  ctx.fillStyle = "#5F6B7C"; ctx.font = 'italic 400 32px "Fraunces",Georgia,serif';
+  const cap = wrap(ctx, "“"+T.cap+"”", CW-140).slice(0,2); cap.forEach((l,i)=>ctx.fillText(l, 70, CW+226+i*40));
+  // signature
+  if(name){
+    ctx.save(); ctx.translate(CW-64, 132); ctx.rotate(-0.09);
+    let size = 118; do { ctx.font = `${size}px ${SIG}`; size -= 4; } while(ctx.measureText(name).width > 560 && size > 40);
+    ctx.textAlign = "right"; ctx.textBaseline = "alphabetic";
+    ctx.lineWidth = 8; ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineJoin = "round"; ctx.strokeText(name, 0, 0);
+    ctx.fillStyle = "#1F2A3B"; ctx.fillText(name, 0, 0);
+    ctx.restore();
+  }
+  // thin frame
+  ctx.strokeStyle = "rgba(31,42,59,.08)"; ctx.lineWidth = 2; rr(ctx,1,1,CW-2,CH-2,43); ctx.stroke();
+}
+function composite(st){
+  const M = 100, GAP = 80, W = M*2 + CW*2 + GAP, H = M + CH + 130;
+  const c = document.createElement("canvas"); c.width = W; c.height = H; const ctx = c.getContext("2d");
+  ctx.fillStyle = "#EDF0F3"; ctx.fillRect(0,0,W,H);
+  [[M,"cvBack"],[M+CW+GAP,"cvFront"]].forEach(([x,id])=>{
+    ctx.save(); ctx.shadowColor = "rgba(31,42,59,.22)"; ctx.shadowBlur = 40; ctx.shadowOffsetY = 18;
+    ctx.fillStyle = "#fff"; rr(ctx,x,M,CW,CH,44); ctx.fill(); ctx.restore();
+    ctx.drawImage(document.getElementById(id), x, M);
+  });
+  ctx.fillStyle = "#5F6B7C"; ctx.font = '400 30px "DM Sans",system-ui,sans-serif'; ctx.textAlign = "center";
+  ctx.fillText("SDTI · Sketchy Designer Type Indicator · " + pageURL().replace(/^https?:\/\//,"").replace(/\/index\.html$/,"").replace(/\/$/,""), W/2, H-58);
+  return c;
+}
+let cardFile = null, cardTimer = null;
+function redrawCard(){
+  if(!cardState) return;
+  drawBack(document.getElementById("cvBack").getContext("2d"), cardState);
+  drawFront(document.getElementById("cvFront").getContext("2d"), cardState);
+  clearTimeout(cardTimer); cardFile = null;
+  cardTimer = setTimeout(()=>{ try{ composite(cardState).toBlob(b=>{ if(b) cardFile = new File([b], `sdti-${cardState.isSq ? "hidden" : cardState.code.toLowerCase()}.png`, { type:"image/png" }); }, "image/png"); }catch(e){ cardFile = null; } }, 250);
+}
+function setupCard(base){
+  cardState = Object.assign({ name:"", photo:null }, base);
+  const card = $("#pcard"), input = $("#sigName");
+  const flipIt = ()=>card.classList.toggle("flipped");
+  card.addEventListener("click", flipIt);
+  card.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); flipIt(); } });
+  input.addEventListener("input", ()=>{ cardState.name = input.value.trim(); redrawCard(); });
+  input.addEventListener("focus", ()=>card.classList.add("flipped"));
+  $("#saveBtn").addEventListener("click", saveCard);
+  redrawCard();
+  const im = new Image(); im.onload = ()=>{ cardState.photo = im; redrawCard(); }; im.src = img(base.imgKey, "felt");
+  const fonts = ['600 40px "Fraunces"','italic 400 40px "Fraunces"','700 20px "DM Sans"','400 20px "DM Sans"','40px "Mrs Saint Delafield"','40px "Long Cang"'];
+  if(document.fonts && document.fonts.load){ Promise.all(fonts.map(f=>document.fonts.load(f, "Aa中").catch(()=>{}))).then(redrawCard); }
+}
+function downloadBlob(file){
+  const url = URL.createObjectURL(file), a = document.createElement("a");
+  a.href = url; a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+}
+async function saveCard(){
+  const t = $("#toast");
+  let file = cardFile;
+  if(!file){
+    t.textContent = "One sec, sketching your card…";
+    try{ file = await new Promise((res,rej)=>composite(cardState).toBlob(b=>b ? res(new File([b], "sdti-card.png", {type:"image/png"})) : rej(), "image/png")); }
+    catch(e){ t.textContent = "Couldn't create the image here. A screenshot works too."; return; }
+  }
+  if(navigator.canShare && navigator.canShare({ files:[file] })){
+    try{ await navigator.share({ files:[file], title:"My SDTI card" }); t.textContent = ""; return; }
+    catch(e){ if(e && e.name === "AbortError"){ t.textContent = ""; return; } }
+  }
+  downloadBlob(file); t.textContent = "Card saved. Go find your nemesis.";
 }
 async function copyLink(){
   const url = pageURL(), t = $("#toast");
